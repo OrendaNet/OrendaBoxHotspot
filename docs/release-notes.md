@@ -6,4 +6,4 @@
 - Configure the WiFi name and password from Edge Console; the password stays write-only.
 - Choose Box-hosted apps only or share the Box internet connection.
 - Show connected devices and the Box address nearby devices should open.
-- Requires SDK contract 1.2, Edge Manager 0.2.45 and platform 0.2.52 or later.
+- Requires SDK contract 1.2, Edge Manager 0.2.45 and platform 0.2.53 or later.

@@ -6,7 +6,7 @@ The app is only the interface. Edge Manager owns the access point through Networ
 
 ## Requirements
 
-- OrendaBox platform `0.2.52` or later with an Orenda-managed Edge Manager `0.2.45` or later.
+- OrendaBox platform `0.2.53` or later with an Orenda-managed Edge Manager `0.2.45` or later.
 - SDK contract `1.2` with the `hotspot:manage` capability approved by a Box administrator at installation or update.
 - A WiFi adapter that supports access point mode and is not currently the Box uplink. Use Ethernet for the uplink in hotspot deployments.
 - Edge Console access for the operator. The app uses the standard Edge identity proxy; there is no separate login.

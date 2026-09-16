@@ -84,7 +84,7 @@ async function main() {
     image,
     digest,
     architectures: ['arm64'],
-    minPlatformVersion: '0.2.52',
+    minPlatformVersion: '0.2.53',
     releaseNotes: manifest.versions?.[0]?.releaseNotes || `OrendaBox Hotspot ${version}.`
   });
 

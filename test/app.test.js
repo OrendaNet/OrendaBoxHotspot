@@ -18,7 +18,7 @@ function fakeRuntime() {
   return {
     calls,
     state,
-    context: async () => ({ apiVersion: '1', appId: 'orenda-box-hotspot', platformVersion: '0.2.52', capabilities: ['hotspot:manage'], services: { hotspot: { manage: true, available: true } } }),
+    context: async () => ({ apiVersion: '1', appId: 'orenda-box-hotspot', platformVersion: '0.2.53', capabilities: ['hotspot:manage'], services: { hotspot: { manage: true, available: true } } }),
     hotspot: {
       status: async () => { calls.push(['status']); return { ...state }; },
       configure: async (settings) => { calls.push(['configure', settings]); state.configured = true; state.ssid = settings.ssid || state.ssid; if (settings.internetAccess !== undefined) state.internetAccess = settings.internetAccess; return { ...state }; },
@@ -37,7 +37,7 @@ test('hotspot manifest requests only the SDK 1.2 hotspot capability', () => {
   const manifest = structuredClone(require('../orenda-app.json'));
   assert.match(manifest.metadata.orenda.sdkVersion, /^1\.2$/);
   assert.deepEqual(manifest.metadata.orenda.capabilities, ['hotspot:manage']);
-  const release = { ...manifest, versions: [{ version: '0.1.0', image: `ghcr.io/orendanet/orenda-box-hotspot@sha256:${'a'.repeat(64)}`, architectures: ['arm64'], minPlatformVersion: '0.2.52', releaseNotes: 'First release.' }] };
+  const release = { ...manifest, versions: [{ version: '0.1.0', image: `ghcr.io/orendanet/orenda-box-hotspot@sha256:${'a'.repeat(64)}`, architectures: ['arm64'], minPlatformVersion: '0.2.53', releaseNotes: 'First release.' }] };
   assert.deepEqual(validateManifest(release, { release: true }), []);
   assert.ok(validateManifest({ ...release, metadata: { orenda: { ...manifest.metadata.orenda, sdkVersion: '1' } } }, { release: true }).some((error) => error.includes('1.2')));
 });

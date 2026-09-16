@@ -9,8 +9,8 @@ manifest.versions = [{
   image: `ghcr.io/orendanet/orenda-box-hotspot@${digest}`,
   digest,
   architectures: ['arm64'],
-  minPlatformVersion: '0.2.52',
-  releaseNotes: 'First release: managed WiFi hotspot for OrendaBox. Set the WiFi name and password, optionally share the Box internet connection, and let nearby devices reach Box-hosted web apps. Requires Edge Manager 0.2.45 and platform 0.2.52 or later.'
+  minPlatformVersion: '0.2.53',
+  releaseNotes: 'First release: managed WiFi hotspot for OrendaBox. Set the WiFi name and password, optionally share the Box internet connection, and let nearby devices reach Box-hosted web apps. Requires Edge Manager 0.2.45 and platform 0.2.53 or later.'
 }];
 const errors = validateManifest(manifest, { release: true });
 if (errors.length) throw new Error(errors.join('\n'));
