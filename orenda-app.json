@@ -1,0 +1,17 @@
+{
+  "id": "orenda-box-hotspot",
+  "name": "OrendaBox Hotspot",
+  "description": "Start a WiFi hotspot on your OrendaBox so nearby phones, tablets and laptops can open Box-hosted web apps. Choose the WiFi name and password, and optionally share the Box internet connection. The Box owns the access point and keeps management behind Edge Console sign-in.",
+  "category": "utilities",
+  "runtime": "compose",
+  "metadata": {
+    "orenda": {
+      "sdkVersion": "1.2",
+      "containerPort": 3105,
+      "healthPath": "/health",
+      "ui": { "enabled": true },
+      "capabilities": ["hotspot:manage"]
+    }
+  },
+  "versions": []
+}

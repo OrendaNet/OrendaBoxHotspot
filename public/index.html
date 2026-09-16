@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#1f2916" />
+<title>Orenda Box Hotspot</title>
+<link rel="icon" href="icon.svg" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><strong>Orenda</strong></div>
+  <span class="product">Box Hotspot</span>
+  <span class="topbar-chip" id="conn-chip"><span class="dot"></span><span id="conn-text">Checking</span></span>
+</header>
+<main class="shell">
+  <div class="banner error" id="banner" role="alert" hidden></div>
+  <section class="panel hero">
+    <div class="hero-head">
+      <div>
+        <p class="eyebrow">WiFi hotspot</p>
+        <h1 id="hotspot-title">Loading…</h1>
+        <p class="hint" id="hotspot-reason" hidden></p>
+      </div>
+      <span class="status-pill" id="status-pill"><span class="dot"></span><span id="status-text">Checking</span></span>
+    </div>
+    <div class="stat-grid">
+      <article class="stat-card"><span>Network name</span><strong id="stat-ssid">—</strong></article>
+      <article class="stat-card"><span>Internet access</span><strong id="stat-internet">—</strong></article>
+      <article class="stat-card"><span>Connected devices</span><strong id="stat-clients">—</strong></article>
+      <article class="stat-card"><span>Open on Box</span><strong id="stat-portal">—</strong></article>
+    </div>
+    <p class="hint">Nearby devices join this WiFi network and open <strong id="portal-url">the Box address</strong> to reach OrendaBox-hosted web apps. No internet sharing is needed for Box-hosted apps.</p>
+  </section>
+  <section class="panel">
+    <h2>Hotspot settings</h2>
+    <form id="settings-form" novalidate>
+      <div class="form-grid">
+        <label>WiFi name<input id="ssid" maxlength="32" autocomplete="off" spellcheck="false" required placeholder="OrendaBox Line 4" /></label>
+        <label>WiFi password<input id="password" type="password" minlength="8" maxlength="63" autocomplete="new-password" placeholder="Leave blank to keep the current password" /></label>
+        <label class="check full"><input type="checkbox" id="internet" /><span>Share this Box’s internet connection<small>Off keeps the network local: devices can still open Box-hosted web apps.</small></span></label>
+      </div>
+      <div class="button-row">
+        <button class="button primary" id="save" type="submit">Save settings</button>
+        <button class="button" id="start" type="button">Start hotspot</button>
+        <button class="button ghost" id="stop" type="button">Stop hotspot</button>
+      </div>
+    </form>
+  </section>
+  <section class="panel">
+    <div class="section-head">
+      <h2>Connected devices</h2>
+      <button class="button ghost slim" id="refresh" type="button">Refresh</button>
+    </div>
+    <div id="clients" class="client-list"><p class="hint">No devices are connected yet.</p></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
