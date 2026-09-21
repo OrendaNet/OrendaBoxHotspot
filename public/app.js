@@ -19,12 +19,18 @@
     save: document.getElementById('save'),
     start: document.getElementById('start'),
     stop: document.getElementById('stop'),
+    releaseWifi: document.getElementById('release-wifi'),
+    releaseWifiHint: document.getElementById('release-wifi-hint'),
     refresh: document.getElementById('refresh'),
     clientList: document.getElementById('clients')
   };
+  const RELEASE_HINT = 'Disconnecting Wi-Fi frees the radio for the hotspot. The Box stays online through Ethernet or mobile data, and the hotspot starts automatically.';
+  const RELEASE_BLOCKED_HINT = 'This Box uses Wi-Fi as its only uplink. Connect Ethernet or mobile data first so the Box stays reachable, then try again.';
   let manageable = false;
   let busy = false;
   let loading = false;
+  let releaseBlocked = false;
+  let uplinkConflict = false;
   function showBanner(kind, text) {
     if (!text) { elements.banner.hidden = true; return; }
     elements.banner.className = `banner ${kind}`;
@@ -37,6 +43,7 @@
     for (const control of [elements.save, elements.start, elements.stop, elements.refresh, elements.ssidInput, elements.passwordInput, elements.internetInput]) {
       control.disabled = value || (control !== elements.refresh && !manageable);
     }
+    elements.releaseWifi.disabled = value || !manageable || releaseBlocked;
   }
 
   function renderClients(clients) {
@@ -60,6 +67,12 @@
     manageable = Boolean(payload.manageable);
     const active = Boolean(hotspot.active);
     const configured = Boolean(hotspot.configured || hotspot.ssid);
+    const uplink = hotspot.uplink || {};
+    const showRelease = manageable && !active && (Boolean(uplink.wifiConnected) || uplinkConflict);
+    releaseBlocked = Boolean(uplink.wifiConnected) && uplink.canReleaseWifi === false;
+    elements.releaseWifi.hidden = !showRelease;
+    elements.releaseWifiHint.hidden = !showRelease;
+    elements.releaseWifiHint.textContent = releaseBlocked ? RELEASE_BLOCKED_HINT : RELEASE_HINT;
     elements.title.textContent = active ? (hotspot.ssid || 'Hotspot running') : configured ? 'Hotspot stopped' : 'Hotspot not configured yet';
     elements.statusText.textContent = active ? 'Running' : configured ? 'Stopped' : 'Not configured';
     elements.statusPill.className = `status-pill ${active ? 'live' : configured ? 'warn' : ''}`;
@@ -121,10 +134,19 @@
     showBanner('info', 'Applying changes…');
     try {
       const payload = await request(route, { method, body });
+      uplinkConflict = false;
       render(payload);
       showBanner('success', success);
       return true;
     } catch (error) {
+      if (/uplink/i.test(error.message)) {
+        // Older Edge Managers do not report uplink state, so surface the action
+        // as soon as a start attempt is rejected for using the WiFi uplink.
+        uplinkConflict = true;
+        elements.releaseWifi.hidden = !manageable;
+        elements.releaseWifiHint.hidden = !manageable;
+        elements.releaseWifiHint.textContent = RELEASE_HINT;
+      }
       showBanner('error', error.message);
       return false;
     } finally {
@@ -141,6 +163,7 @@
   });
   elements.start.addEventListener('click', () => mutate('api/hotspot/start', { empty: true }, 'Hotspot started.'));
   elements.stop.addEventListener('click', () => mutate('api/hotspot/stop', { empty: true }, 'Hotspot stopped.'));
+  elements.releaseWifi.addEventListener('click', () => mutate('api/hotspot/release-wifi-and-start', { empty: true }, 'Wi-Fi uplink released and hotspot started.'));
   refresh();
   elements.refresh.addEventListener('click', () => refresh());
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh({ quiet: true }); });

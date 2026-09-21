@@ -79,7 +79,8 @@ function createApp({ runtime = createRuntimeClient(), secret = process.env.OREND
       if (url.pathname === '/api/state') return json(res, 200, { user, manageable: canManage(user), ...(await snapshot()) });
       const mutation = url.pathname === '/api/hotspot' ? 'configure'
         : url.pathname === '/api/hotspot/start' ? 'start'
-          : url.pathname === '/api/hotspot/stop' ? 'stop' : null;
+          : url.pathname === '/api/hotspot/stop' ? 'stop'
+            : url.pathname === '/api/hotspot/release-wifi-and-start' ? 'releaseWifi' : null;
       if (mutation) {
         if (!canManage(user)) return json(res, 403, { error: 'Ask a Box administrator to manage the hotspot.' });
         if (mutation === 'configure') {
@@ -93,8 +94,14 @@ function createApp({ runtime = createRuntimeClient(), secret = process.env.OREND
         } else {
           if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' });
           req.resume();
-          try { await (mutation === 'start' ? runtime.hotspot.start() : runtime.hotspot.stop()); }
-          catch (error) { const failure = hotspotFailure(error); return json(res, failure.status, { error: failure.message }); }
+          try {
+            if (mutation === 'releaseWifi') {
+              // Explicit operator action: free the WiFi radio, then claim it.
+              await runtime.hotspot.disconnectUplink();
+              await runtime.hotspot.start();
+            } else if (mutation === 'start') await runtime.hotspot.start();
+            else await runtime.hotspot.stop();
+          } catch (error) { const failure = hotspotFailure(error); return json(res, failure.status, { error: failure.message }); }
         }
         return json(res, 200, await snapshot());
       }

@@ -1,5 +1,10 @@
 name: Release hotspot image
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
   workflow_dispatch:
 permissions:
   contents: write

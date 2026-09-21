@@ -23,7 +23,8 @@ function fakeRuntime() {
       status: async () => { calls.push(['status']); return { ...state }; },
       configure: async (settings) => { calls.push(['configure', settings]); state.configured = true; state.ssid = settings.ssid || state.ssid; if (settings.internetAccess !== undefined) state.internetAccess = settings.internetAccess; return { ...state }; },
       start: async () => { calls.push(['start']); state.active = true; return { ...state }; },
-      stop: async () => { calls.push(['stop']); state.active = false; return { ...state }; }
+      stop: async () => { calls.push(['stop']); state.active = false; return { ...state }; },
+      disconnectUplink: async () => { calls.push(['disconnectUplink']); return { released: true, releasedDevices: ['wlan0'], alternateUplink: 'wwan0' }; }
     }
   };
 }
@@ -75,6 +76,30 @@ test('settings, start and stop call only the scoped runtime hotspot routes', asy
   assert.equal((await fetch(`${origin}/api/hotspot`, { method: 'PUT', headers: { ...ADMIN_HEADERS, 'Content-Type': 'text/plain' }, body: 'ssid' })).status, 415);
   const huge = await fetch(`${origin}/api/hotspot`, { method: 'PUT', headers: json, body: JSON.stringify({ ssid: 'x'.repeat(5000) }) });
   assert.equal(huge.status, 413);
+});
+
+test('the Wi-Fi release action frees the uplink before starting the hotspot', async (t) => {
+  const runtime = fakeRuntime();
+  const app = createApp({ runtime, secret: 'fixture-secret' });
+  const origin = await listen(app);
+  t.after(() => { app.closeAllConnections(); app.close(); });
+  const released = await fetch(`${origin}/api/hotspot/release-wifi-and-start`, { method: 'POST', headers: ADMIN_HEADERS });
+  assert.equal(released.status, 200);
+  assert.deepEqual(runtime.calls.filter(([name]) => name !== 'status'), [['disconnectUplink'], ['start']]);
+  assert.equal(runtime.state.active, true);
+  assert.equal((await fetch(`${origin}/api/hotspot/release-wifi-and-start`, { method: 'GET', headers: ADMIN_HEADERS })).status, 405);
+});
+
+test('a missing runtime release route points at the Edge Manager update', async (t) => {
+  const runtime = fakeRuntime();
+  runtime.hotspot.disconnectUplink = async () => { throw Object.assign(new Error('Not found.'), { status: 404 }); };
+  const app = createApp({ runtime, secret: 'fixture-secret' });
+  const origin = await listen(app);
+  t.after(() => { app.closeAllConnections(); app.close(); });
+  const response = await fetch(`${origin}/api/hotspot/release-wifi-and-start`, { method: 'POST', headers: ADMIN_HEADERS });
+  assert.equal(response.status, 404);
+  assert.match((await response.json()).error, /Update Edge Manager/i);
+  assert.ok(!runtime.calls.some(([name]) => name === 'start'), 'the hotspot is not started after a failed release');
 });
 
 test('actionable runtime failures pass through and unknown failures stay generic', async (t) => {

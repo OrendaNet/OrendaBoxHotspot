@@ -10,7 +10,7 @@ manifest.versions = [{
   digest,
   architectures: ['arm64'],
   minPlatformVersion: '0.2.53',
-  releaseNotes: 'First release: managed WiFi hotspot for OrendaBox. Set the WiFi name and password, optionally share the Box internet connection, and let nearby devices reach Box-hosted web apps. Requires Edge Manager 0.2.45 and platform 0.2.53 or later.'
+  releaseNotes: 'Adds a Disconnect Wi-Fi & start hotspot action for Boxes whose WiFi radio is the uplink: the Box releases WiFi only when Ethernet or mobile broadband keeps it reachable, then starts the access point. Releasing a WiFi uplink requires Edge Manager 0.2.48 or later; other hotspot operations keep working on Edge Manager 0.2.45 and platform 0.2.53 or later.'
 }];
 const errors = validateManifest(manifest, { release: true });
 if (errors.length) throw new Error(errors.join('\n'));

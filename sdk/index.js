@@ -44,11 +44,11 @@ function hotspotSettings(settings) {
 }
 
 function createRuntimeClient({ baseUrl = process.env.ORENDA_EDGE_API_URL, token = process.env.ORENDA_APP_TOKEN, fetchImpl = fetch } = {}) {
-  const request = async (route, body, method = body ? 'POST' : 'GET', streamOptions) => {
+  const request = async (route, body, method = body ? 'POST' : 'GET', streamOptions, timeoutMs = 10000) => {
     if (!baseUrl || !token) throw new Error('OrendaBox runtime credentials are unavailable; install through Edge Console');
     const controller = new AbortController();
     const signal = streamOptions?.signal ? AbortSignal.any([controller.signal, streamOptions.signal]) : controller.signal;
-    const timeout = setTimeout(() => controller.abort(new Error('OrendaBox API did not respond')), 10000);
+    const timeout = setTimeout(() => controller.abort(new Error('OrendaBox API did not respond')), timeoutMs);
     timeout.unref?.();
     let response;
     try { response = await fetchImpl(`${baseUrl.replace(/\/+$/, '')}${route}`, {
@@ -107,8 +107,11 @@ function createRuntimeClient({ baseUrl = process.env.ORENDA_EDGE_API_URL, token 
     hotspot: {
       status: () => request('/hotspot'),
       configure: (settings) => request('/hotspot', hotspotSettings(settings), 'PUT'),
-      start: () => request('/hotspot/start', {}),
-      stop: () => request('/hotspot/stop', {})
+      // NetworkManager activation has its own bounded wait, so allow more than
+      // the default request budget before the app reports an API timeout.
+      start: () => request('/hotspot/start', {}, 'POST', undefined, 35000),
+      stop: () => request('/hotspot/stop', {}, 'POST', undefined, 35000),
+      disconnectUplink: () => request('/hotspot/uplink/disconnect', {}, 'POST', undefined, 35000)
     },
     mongo: {
       collections: () => request('/mongodb/collections'),

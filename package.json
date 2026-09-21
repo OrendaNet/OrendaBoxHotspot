@@ -1,6 +1,6 @@
 {
   "name": "orenda-box-hotspot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Managed WiFi hotspot for OrendaBox with optional internet sharing",
   "license": "MIT",

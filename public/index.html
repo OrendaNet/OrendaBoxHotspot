@@ -45,7 +45,9 @@
         <button class="button primary" id="save" type="submit">Save settings</button>
         <button class="button" id="start" type="button">Start hotspot</button>
         <button class="button ghost" id="stop" type="button">Stop hotspot</button>
+        <button class="button" id="release-wifi" type="button" hidden>Disconnect Wi-Fi &amp; start hotspot</button>
       </div>
+      <p class="hint" id="release-wifi-hint" hidden>This Box is using Wi-Fi as its uplink, so the hotspot cannot use the radio. Disconnecting frees it for the hotspot; the Box stays online through Ethernet or mobile data, and the hotspot starts automatically.</p>
     </form>
   </section>
   <section class="panel">

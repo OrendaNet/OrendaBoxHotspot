@@ -6,9 +6,9 @@ The app is only the interface. Edge Manager owns the access point through Networ
 
 ## Requirements
 
-- OrendaBox platform `0.2.53` or later with an Orenda-managed Edge Manager `0.2.45` or later.
+- OrendaBox platform `0.2.53` or later with an Orenda-managed Edge Manager `0.2.45` or later. Releasing a WiFi uplink from the app requires Edge Manager `0.2.48` or later.
 - SDK contract `1.2` with the `hotspot:manage` capability approved by a Box administrator at installation or update.
-- A WiFi adapter that supports access point mode and is not currently the Box uplink. Use Ethernet for the uplink in hotspot deployments.
+- A WiFi adapter that supports access point mode. If that adapter is currently the Box uplink, an administrator can release the WiFi uplink from the app once Ethernet or mobile broadband is available.
 - Edge Console access for the operator. The app uses the standard Edge identity proxy; there is no separate login.
 
 ## Operation
@@ -16,8 +16,9 @@ The app is only the interface. Edge Manager owns the access point through Networ
 1. Open the app from Edge Console and approve `hotspot:manage` when asked.
 2. Set the WiFi name and password, then choose whether to share the Box internet connection.
 3. Start the hotspot and tell nearby users to join the WiFi network and open the Box address shown in the app, for example `http://10.42.0.1/`.
-4. Without internet sharing, devices still reach Box-hosted web apps. With sharing, the Box forwards traffic through its active uplink.
-5. Stop the hotspot when it is no longer needed. Settings are retained for the next start.
+4. If the hotspot cannot start because WiFi is the Box uplink, the app offers **Disconnect Wi-Fi & start hotspot**. It releases WiFi only when Ethernet or mobile broadband keeps the Box reachable, then starts the access point.
+5. Without internet sharing, devices still reach Box-hosted web apps. With sharing, the Box forwards traffic through its active uplink.
+6. Stop the hotspot when it is no longer needed. Settings are retained for the next start.
 
 The stored WiFi password is write-only: `GET /api/v1/runtime/hotspot` never returns it, and leaving the password field blank keeps the current passphrase.
 
@@ -44,7 +45,7 @@ The workflow builds the ARM64 image on a native ARM64 runner, signs it with cosi
 
 - The app container stays unprivileged: read-only root, dropped capabilities, no host network and no host mounts.
 - All browser requests require the Edge proxy identity; mutations require an Edge administrator role.
-- The Box retains access-point, DHCP, NAT and firewall ownership. The app can only read hotspot status and set the WiFi name, password and internet toggle.
+- The Box retains access-point, DHCP, NAT and firewall ownership. The app can only read hotspot status, set the WiFi name, password and internet toggle, and request that the Box release a WiFi uplink — which the Box refuses unless Ethernet or mobile broadband keeps it reachable.
 
 ## License
 
