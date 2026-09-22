@@ -49,7 +49,13 @@ test('the hotspot UI promotes the canonical portal URL over the numeric gateway'
   const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
   assert.match(script, /hotspot\.portalUrl \|\| \(hotspot\.address/);
   assert.match(script, /hotspot\.portalSetupUrl \|\| hotspot\.portalUrl/);
-  assert.match(fs.readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8'), /apps\.orenda\.home\.arpa/);
+});
+
+const readmePath = path.join(__dirname, '..', 'README.md');
+test('the source documentation names the canonical portal hostname', {
+  skip: fs.existsSync(readmePath) ? false : 'README is intentionally excluded from the runtime image'
+}, () => {
+  assert.match(fs.readFileSync(readmePath, 'utf8'), /apps\.orenda\.home\.arpa/);
 });
 
 test('browser requests require Edge identity and mutations require an administrator', async (t) => {
