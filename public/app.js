@@ -83,8 +83,8 @@
     elements.ssid.textContent = hotspot.ssid || '—';
     elements.internet.textContent = hotspot.internetAccess ? 'Shared with devices' : 'Box-hosted apps only';
     elements.clients.textContent = active ? String((hotspot.clients || []).length) : '—';
-    elements.portal.textContent = hotspot.address || '—';
-    elements.portalUrl.textContent = hotspot.portalUrl || 'the Box address';
+    elements.portal.textContent = hotspot.portalUrl || (hotspot.address ? `http://${hotspot.address}/` : '—');
+    elements.portalUrl.textContent = hotspot.portalSetupUrl || hotspot.portalUrl || 'the Box address';
     if (document.activeElement !== elements.ssidInput) elements.ssidInput.value = hotspot.ssid || '';
     elements.internetInput.checked = Boolean(hotspot.internetAccess);
     renderClients(hotspot.clients || []);

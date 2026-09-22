@@ -70,8 +70,8 @@ async function main() {
     body: JSON.stringify({
       slug: appId,
       headline: manifest.name,
-      shortDescription: 'Start a managed WiFi hotspot on your OrendaBox with an optional internet connection.',
-      longDescription: 'OrendaBox Hotspot lets an Edge Console administrator name and password-protect a WiFi network for nearby devices. Devices can always open Box-hosted web apps; internet sharing is a separate toggle. Edge Manager owns the access point, DHCP and forwarding policy, so the app never receives interface names, host paths or firewall control.',
+      shortDescription: 'Start a managed WiFi hotspot with a secure local Orenda Home portal and optional internet access.',
+      longDescription: 'OrendaBox Hotspot lets an Edge Console administrator name and password-protect a WiFi network for nearby devices. Devices discover the Box-specific HTTPS Orenda Home portal through a locally served first-use setup address, so Box-hosted apps remain available without internet access. Internet sharing is a separate toggle. Edge Manager owns the access point, DHCP and forwarding policy, so the app never receives interface names, host paths or firewall control.',
       categories: ['utilities', 'networking'],
       tags: ['wifi', 'hotspot', 'network'],
       documentationUrl: 'https://github.com/OrendaNet/OrendaBoxHotspot#readme',
@@ -84,8 +84,8 @@ async function main() {
     image,
     digest,
     architectures: ['arm64'],
-    minPlatformVersion: '0.2.53',
-    releaseNotes: manifest.versions?.[0]?.releaseNotes || `OrendaBox Hotspot ${version}.`
+    minPlatformVersion: '0.2.57',
+    releaseNotes: manifest.versions?.[0]?.releaseNotes || 'Shows hotspot users the shared first-use setup address and the Box-specific HTTPS Orenda Home address instead of relying on a numeric gateway. The locally served setup flow lets devices trust the Box CA and use the translated, offline-capable Home PWA without internet access; login and app traffic stay on the unique per-Box HTTPS origin. Requires Edge Manager 0.2.48 and platform 0.2.57 or later.'
   });
 
   const release = await request(baseUrl, `${adminPrefix}/tenants/${encodeURIComponent(tenantId)}/publish`, {

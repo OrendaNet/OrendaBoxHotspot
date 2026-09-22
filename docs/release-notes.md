@@ -1,5 +1,12 @@
 # OrendaBox Hotspot release notes
 
+## 0.1.2
+
+- Show the shared first-use setup address separately from the Box-specific HTTPS Orenda Home address instead of asking hotspot users to remember a numeric gateway.
+- Guide nearby devices through trusting the Box's locally served CA, then keep login and app traffic on the unique per-Box HTTPS origin.
+- Support the translated, offline-capable Orenda Home PWA without requiring the connected device to have internet access.
+- Requires Edge Manager `0.2.48` and OrendaBox platform `0.2.57` or later; the platform supplies the local DNS, certificate setup and secure per-Box portal origin.
+
 ## 0.1.1
 
 - Add a **Disconnect Wi-Fi & start hotspot** action for Boxes whose only free radio is the WiFi uplink. The Box releases WiFi only when Ethernet or mobile broadband keeps it reachable, then starts the access point.

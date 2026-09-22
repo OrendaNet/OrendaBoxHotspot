@@ -6,7 +6,7 @@ The app is only the interface. Edge Manager owns the access point through Networ
 
 ## Requirements
 
-- OrendaBox platform `0.2.53` or later with an Orenda-managed Edge Manager `0.2.45` or later. Releasing a WiFi uplink from the app requires Edge Manager `0.2.48` or later.
+- OrendaBox platform `0.2.57` or later with an Orenda-managed Edge Manager `0.2.48` or later. Platform `0.2.57` supplies the local DNS, Box-specific HTTPS origin and first-use certificate setup used by Orenda Home.
 - SDK contract `1.2` with the `hotspot:manage` capability approved by a Box administrator at installation or update.
 - A WiFi adapter that supports access point mode. If that adapter is currently the Box uplink, an administrator can release the WiFi uplink from the app once Ethernet or mobile broadband is available.
 - Edge Console access for the operator. The app uses the standard Edge identity proxy; there is no separate login.
@@ -15,7 +15,7 @@ The app is only the interface. Edge Manager owns the access point through Networ
 
 1. Open the app from Edge Console and approve `hotspot:manage` when asked.
 2. Set the WiFi name and password, then choose whether to share the Box internet connection.
-3. Start the hotspot and tell nearby users to join the WiFi network and open the Box address shown in the app, for example `http://10.42.0.1/`.
+3. Start the hotspot and tell nearby users to join the WiFi network. On first use, open `http://apps.orenda.home.arpa/` to verify/install that Box's public local CA and discover its unique `https://apps-<20 hex>.orenda.home.arpa/` address; login and PWA installation happen only on that per-Box HTTPS origin.
 4. If the hotspot cannot start because WiFi is the Box uplink, the app offers **Disconnect Wi-Fi & start hotspot**. It releases WiFi only when Ethernet or mobile broadband keeps the Box reachable, then starts the access point.
 5. Without internet sharing, devices still reach Box-hosted web apps. With sharing, the Box forwards traffic through its active uplink.
 6. Stop the hotspot when it is no longer needed. Settings are retained for the next start.

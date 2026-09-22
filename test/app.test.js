@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { createApp, canManage } = require('../server');
 const { validateManifest } = require('../sdk/manifest');
 
@@ -41,6 +43,13 @@ test('hotspot manifest requests only the SDK 1.2 hotspot capability', () => {
   const release = { ...manifest, versions: [{ version: '0.1.0', image: `ghcr.io/orendanet/orenda-box-hotspot@sha256:${'a'.repeat(64)}`, architectures: ['arm64'], minPlatformVersion: '0.2.53', releaseNotes: 'First release.' }] };
   assert.deepEqual(validateManifest(release, { release: true }), []);
   assert.ok(validateManifest({ ...release, metadata: { orenda: { ...manifest.metadata.orenda, sdkVersion: '1' } } }, { release: true }).some((error) => error.includes('1.2')));
+});
+
+test('the hotspot UI promotes the canonical portal URL over the numeric gateway', () => {
+  const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  assert.match(script, /hotspot\.portalUrl \|\| \(hotspot\.address/);
+  assert.match(script, /hotspot\.portalSetupUrl \|\| hotspot\.portalUrl/);
+  assert.match(fs.readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8'), /apps\.orenda\.home\.arpa/);
 });
 
 test('browser requests require Edge identity and mutations require an administrator', async (t) => {
