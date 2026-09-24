@@ -1,5 +1,11 @@
 # OrendaBox Hotspot release notes
 
+## 0.1.3
+
+- Add **Start hotspot automatically** as an independent boot preference in the Hotspot app. Toggling it does not start or stop the running access point.
+- At boot, Edge Manager only releases a connected WiFi uplink when Ethernet or mobile data has an active default route; otherwise it waits and retries. Manual Stop suppresses retries until the next Edge Manager start without erasing the preference.
+- Require Edge Manager `0.2.52` and OrendaBox platform `0.2.60` or later. The release is published as a Hotspot-only catalog update.
+
 ## 0.1.2
 
 - Show the shared first-use setup address separately from the Box-specific HTTPS Orenda Home address instead of asking hotspot users to remember a numeric gateway.

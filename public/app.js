@@ -16,6 +16,8 @@
     ssidInput: document.getElementById('ssid'),
     passwordInput: document.getElementById('password'),
     internetInput: document.getElementById('internet'),
+    autoStartInput: document.getElementById('auto-start'),
+    autoStartHint: document.getElementById('auto-start-hint'),
     save: document.getElementById('save'),
     start: document.getElementById('start'),
     stop: document.getElementById('stop'),
@@ -31,6 +33,9 @@
   let loading = false;
   let releaseBlocked = false;
   let uplinkConflict = false;
+  let autoStartSupported = false;
+  let hotspotAvailable = false;
+  let hotspotConfigured = false;
   function showBanner(kind, text) {
     if (!text) { elements.banner.hidden = true; return; }
     elements.banner.className = `banner ${kind}`;
@@ -44,6 +49,7 @@
       control.disabled = value || (control !== elements.refresh && !manageable);
     }
     elements.releaseWifi.disabled = value || !manageable || releaseBlocked;
+    elements.autoStartInput.disabled = value || !manageable || !autoStartSupported || !hotspotAvailable || !hotspotConfigured;
   }
 
   function renderClients(clients) {
@@ -65,6 +71,9 @@
     const hotspot = payload.hotspot || {};
     const user = payload.user || {};
     manageable = Boolean(payload.manageable);
+    autoStartSupported = typeof hotspot.autoStart === 'boolean';
+    hotspotAvailable = hotspot.available !== false;
+    hotspotConfigured = hotspot.configured === true;
     const active = Boolean(hotspot.active);
     const configured = Boolean(hotspot.configured || hotspot.ssid);
     const uplink = hotspot.uplink || {};
@@ -87,6 +96,14 @@
     elements.portalUrl.textContent = hotspot.portalSetupUrl || hotspot.portalUrl || 'the Box address';
     if (document.activeElement !== elements.ssidInput) elements.ssidInput.value = hotspot.ssid || '';
     elements.internetInput.checked = Boolean(hotspot.internetAccess);
+    elements.autoStartInput.checked = Boolean(hotspot.autoStart);
+    elements.autoStartHint.textContent = !hotspotAvailable
+      ? 'Automatic startup is unavailable while the hotspot service is unavailable.'
+      : autoStartSupported
+        ? hotspotConfigured
+          ? 'If Wi-Fi is the Box uplink, it will switch the radio only when Ethernet or mobile data has an active default route. Otherwise it will wait and retry.'
+          : 'Save a Wi-Fi name and password before choosing automatic startup.'
+        : 'Update Edge Manager on this Box to configure automatic startup.';
     renderClients(hotspot.clients || []);
     if (!manageable) showBanner('info', 'Ask a Box administrator to approve hotspot management for this app before changing these settings.');
     else if (hotspot.available === false) showBanner('error', hotspot.reason || 'Hotspot management is unavailable on this Box.');
@@ -139,7 +156,7 @@
       showBanner('success', success);
       return true;
     } catch (error) {
-      if (/uplink/i.test(error.message)) {
+      if (!(body && Object.hasOwn(body, 'autoStart')) && /uplink/i.test(error.message)) {
         // Older Edge Managers do not report uplink state, so surface the action
         // as soon as a start attempt is rejected for using the WiFi uplink.
         uplinkConflict = true;
@@ -164,6 +181,13 @@
   elements.start.addEventListener('click', () => mutate('api/hotspot/start', { empty: true }, 'Hotspot started.'));
   elements.stop.addEventListener('click', () => mutate('api/hotspot/stop', { empty: true }, 'Hotspot stopped.'));
   elements.releaseWifi.addEventListener('click', () => mutate('api/hotspot/release-wifi-and-start', { empty: true }, 'Wi-Fi uplink released and hotspot started.'));
+  elements.autoStartInput.addEventListener('change', () => {
+    const enabled = elements.autoStartInput.checked;
+    mutate('api/hotspot', { autoStart: enabled }, enabled
+      ? 'Hotspot will start automatically after reboot when it can do so safely.'
+      : 'Automatic hotspot startup is off. The current hotspot has not changed.')
+      .then((saved) => { if (!saved) elements.autoStartInput.checked = !enabled; });
+  });
   refresh();
   elements.refresh.addEventListener('click', () => refresh());
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh({ quiet: true }); });

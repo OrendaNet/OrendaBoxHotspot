@@ -9,8 +9,8 @@ manifest.versions = [{
   image: `ghcr.io/orendanet/orenda-box-hotspot@${digest}`,
   digest,
   architectures: ['arm64'],
-  minPlatformVersion: '0.2.57',
-  releaseNotes: 'Shows hotspot users the shared first-use setup address and the Box-specific HTTPS Orenda Home address instead of relying on a numeric gateway. The locally served setup flow lets devices trust the Box CA and use the translated, offline-capable Home PWA without internet access; login and app traffic stay on the unique per-Box HTTPS origin. Requires Edge Manager 0.2.48 and platform 0.2.57 or later.'
+  minPlatformVersion: '0.2.60',
+  releaseNotes: 'Adds a separate automatic-start switch. Edge Manager stores the boot preference without changing the running hotspot, safely waits for an Ethernet or mobile default route before releasing a WiFi uplink, and retries when needed. Requires Edge Manager 0.2.52 and Platform 0.2.60. The Box-specific HTTPS Orenda Home setup remains available offline.'
 }];
 const errors = validateManifest(manifest, { release: true });
 if (errors.length) throw new Error(errors.join('\n'));

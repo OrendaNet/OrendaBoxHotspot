@@ -2,7 +2,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const { createApp, canManage } = require('../server');
+const { createRuntimeClient } = require('../sdk');
 const { validateManifest } = require('../sdk/manifest');
 
 const ADMIN_HEADERS = {
@@ -16,14 +18,14 @@ const ADMIN_HEADERS = {
 
 function fakeRuntime() {
   const calls = [];
-  const state = { configured: false, active: false, ssid: null, internetAccess: false, available: true, clients: [] };
+  const state = { configured: false, active: false, autoStart: false, ssid: null, internetAccess: false, available: true, clients: [] };
   return {
     calls,
     state,
     context: async () => ({ apiVersion: '1', appId: 'orenda-box-hotspot', platformVersion: '0.2.53', capabilities: ['hotspot:manage'], services: { hotspot: { manage: true, available: true } } }),
     hotspot: {
       status: async () => { calls.push(['status']); return { ...state }; },
-      configure: async (settings) => { calls.push(['configure', settings]); state.configured = true; state.ssid = settings.ssid || state.ssid; if (settings.internetAccess !== undefined) state.internetAccess = settings.internetAccess; return { ...state }; },
+      configure: async (settings) => { calls.push(['configure', settings]); state.configured = true; state.ssid = settings.ssid || state.ssid; if (settings.internetAccess !== undefined) state.internetAccess = settings.internetAccess; if (settings.autoStart !== undefined) state.autoStart = settings.autoStart; return { ...state }; },
       start: async () => { calls.push(['start']); state.active = true; return { ...state }; },
       stop: async () => { calls.push(['stop']); state.active = false; return { ...state }; },
       disconnectUplink: async () => { calls.push(['disconnectUplink']); return { released: true, releasedDevices: ['wlan0'], alternateUplink: 'wwan0' }; }
@@ -49,6 +51,22 @@ test('the hotspot UI promotes the canonical portal URL over the numeric gateway'
   const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
   assert.match(script, /hotspot\.portalUrl \|\| \(hotspot\.address/);
   assert.match(script, /hotspot\.portalSetupUrl \|\| hotspot\.portalUrl/);
+});
+
+test('the vendored SDK accepts only a boolean automatic-start setting', async () => {
+  const calls = [];
+  const runtime = createRuntimeClient({
+    baseUrl: 'http://127.0.0.1:8088/api/v1/runtime',
+    token: 'fixture-token',
+    fetchImpl: async (url, options) => { calls.push([url, options]); return { ok: true, json: async () => ({ autoStart: true }) }; }
+  });
+  assert.throws(() => runtime.hotspot.configure({ autoStart: 'true' }), /autoStart/);
+  assert.throws(() => runtime.hotspot.configure({ autoStart: true, unexpected: true }), /only ssid/);
+  assert.deepEqual(await runtime.hotspot.configure({ autoStart: true }), { autoStart: true });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'http://127.0.0.1:8088/api/v1/runtime/hotspot');
+  assert.equal(calls[0][1].method, 'PUT');
+  assert.deepEqual(JSON.parse(calls[0][1].body), { autoStart: true });
 });
 
 const readmePath = path.join(__dirname, '..', 'README.md');
@@ -91,6 +109,79 @@ test('settings, start and stop call only the scoped runtime hotspot routes', asy
   assert.equal((await fetch(`${origin}/api/hotspot`, { method: 'PUT', headers: { ...ADMIN_HEADERS, 'Content-Type': 'text/plain' }, body: 'ssid' })).status, 415);
   const huge = await fetch(`${origin}/api/hotspot`, { method: 'PUT', headers: json, body: JSON.stringify({ ssid: 'x'.repeat(5000) }) });
   assert.equal(huge.status, 413);
+});
+
+test('automatic startup is a separate administrator-only preference and does not start or stop the AP', async (t) => {
+  const runtime = fakeRuntime();
+  const app = createApp({ runtime, secret: 'fixture-secret' });
+  const origin = await listen(app);
+  t.after(() => { app.closeAllConnections(); app.close(); });
+  const headers = { ...ADMIN_HEADERS, 'Content-Type': 'application/json' };
+  const enabled = await fetch(`${origin}/api/hotspot`, { method: 'PUT', headers, body: JSON.stringify({ autoStart: true }) });
+  assert.equal(enabled.status, 200);
+  assert.equal((await enabled.json()).hotspot.autoStart, true);
+  const status = await (await fetch(`${origin}/api/state`, { headers: ADMIN_HEADERS })).json();
+  assert.equal(status.hotspot.autoStart, true);
+  const disabled = await fetch(`${origin}/api/hotspot`, { method: 'PUT', headers, body: JSON.stringify({ autoStart: false }) });
+  assert.equal(disabled.status, 200);
+  assert.equal((await disabled.json()).hotspot.autoStart, false);
+  assert.deepEqual(runtime.calls.filter(([name]) => name !== 'status'), [['configure', { autoStart: true }], ['configure', { autoStart: false }]]);
+  const viewer = { ...headers, 'x-orenda-user-roles': 'viewer' };
+  assert.equal((await fetch(`${origin}/api/hotspot`, { method: 'PUT', headers: viewer, body: JSON.stringify({ autoStart: true }) })).status, 403);
+  assert.equal(runtime.state.autoStart, false);
+});
+
+test('auto-start switch saves only the boot preference and stays disabled on older Edge Managers', async () => {
+  const markup = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  assert.match(markup, /id="auto-start"/);
+  const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  const controls = new Map();
+  const document = {
+    hidden: false,
+    activeElement: null,
+    getElementById(id) {
+      if (!controls.has(id)) controls.set(id, {
+        disabled: false, hidden: false, checked: false, value: '', textContent: '', innerHTML: '',
+        listeners: {}, addEventListener(event, callback) { this.listeners[event] = callback; }
+      });
+      return controls.get(id);
+    },
+    addEventListener() {}
+  };
+  const calls = [];
+  let autoStart = false;
+  let supported = true;
+  let configured = true;
+  const fetchImpl = async (route, options = {}) => {
+    calls.push([route, options]);
+    if (route === 'api/hotspot' && options.method === 'PUT') autoStart = JSON.parse(options.body).autoStart;
+    return { ok: true, json: async () => ({
+      user: { name: 'Ada' }, manageable: true,
+      hotspot: { active: false, configured, available: true, ssid: 'Box', clients: [], ...(supported ? { autoStart } : {}) }
+    }) };
+  };
+  vm.runInNewContext(script, { document, fetch: fetchImpl, setInterval() {} });
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  await settle();
+  const toggle = controls.get('auto-start');
+  assert.equal(toggle.disabled, false);
+  toggle.checked = true;
+  toggle.listeners.change();
+  await settle();
+  assert.equal(autoStart, true);
+  assert.deepEqual(calls.filter(([route]) => route !== 'api/state').map(([route, options]) => [route, options.method, JSON.parse(options.body)]), [['api/hotspot', 'PUT', { autoStart: true }]]);
+  assert.equal(toggle.checked, true);
+  supported = false;
+  controls.get('refresh').listeners.click();
+  await settle();
+  assert.equal(toggle.disabled, true);
+  assert.match(controls.get('auto-start-hint').textContent, /Update Edge Manager/);
+  supported = true;
+  configured = false;
+  controls.get('refresh').listeners.click();
+  await settle();
+  assert.equal(toggle.disabled, true);
+  assert.match(controls.get('auto-start-hint').textContent, /Save a Wi-Fi name and password/);
 });
 
 test('the Wi-Fi release action frees the uplink before starting the hotspot', async (t) => {

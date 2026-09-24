@@ -50,6 +50,11 @@
       <p class="hint" id="release-wifi-hint" hidden>This Box is using Wi-Fi as its uplink, so the hotspot cannot use the radio. Disconnecting frees it for the hotspot; the Box stays online through Ethernet or mobile data, and the hotspot starts automatically.</p>
     </form>
   </section>
+  <section class="panel startup">
+    <h2>After a reboot</h2>
+    <label class="check"><input type="checkbox" id="auto-start" aria-describedby="auto-start-hint" /><span>Start hotspot automatically<small>This saves a boot preference; it does not start or stop the hotspot now.</small></span></label>
+    <p class="hint" id="auto-start-hint">If Wi-Fi is the Box uplink, it will switch the radio only when Ethernet or mobile data has an active default route. Otherwise it will wait and retry.</p>
+  </section>
   <section class="panel">
     <div class="section-head">
       <h2>Connected devices</h2>
