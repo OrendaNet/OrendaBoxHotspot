@@ -1,10 +1,12 @@
 {
   "name": "orenda-box-hotspot",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "Managed WiFi hotspot for OrendaBox with optional internet sharing",
   "license": "MIT",
-  "engines": { "node": ">=20.3" },
+  "engines": {
+    "node": ">=20.3"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node sdk/dev.js",
