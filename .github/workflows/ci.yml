@@ -19,4 +19,4 @@ jobs:
           set -euo pipefail
           test "$(uname -m)" = aarch64
           docker build -t orenda-box-hotspot:check .
-          docker run --rm -v "$PWD/test:/app/test:ro" orenda-box-hotspot:check npm test
+          docker run --rm -v "$PWD/test:/app/test:ro" -v "$PWD/scripts:/app/scripts:ro" orenda-box-hotspot:check npm test
